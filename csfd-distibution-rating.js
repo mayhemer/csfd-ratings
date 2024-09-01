@@ -88,9 +88,6 @@
     parent.insertBefore(distribution_element, before);
   }
 
-  // Main loop, read `i` more pages to load the distribution, starting with the initial page
-  initialize();
-
   const read_cache = (key, destination, age) => {
     const json = key ? localStorage[key] : null;
     if (!json) {
@@ -141,7 +138,8 @@
     });
   };
 
-  // entry point
+  // Main loop, read `i` more pages to load the distribution, starting with the initial page
+  initialize();
 
   const baseline_url = window.location.href.match(/^https:\/\/www.csfd.cz\/film\/([^\/]+)\//);
   const cache_key_base_hash = baseline_url ? await digestMessage(baseline_url[1]) : null
