@@ -1,0 +1,14 @@
+{
+  "description": "Adds rating distribution to csfd.cz",
+  "manifest_version": 2,
+  "name": "CSFD Distribuce Hodnoceni",
+  "version": "1.0",
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.csfd.cz/film/*"],
+      "js": ["csfd-distibution-rating.js"],
+      "css": ["csfd-distribution-rating.css"]
+    }
+  ]
+}
