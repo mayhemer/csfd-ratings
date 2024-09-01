@@ -1,5 +1,5 @@
 (async function() {
-  const MAX_RATING_PAGES_TO_FETCH = 30;
+  const MAX_RATING_PAGES_TO_FETCH = 40;
   const CACHE_TIME_TO_LIVE_SECONDS = 60 * 24 * 7;
 
   const get_next_page_url = (source) => {
@@ -55,7 +55,7 @@
   const ratings_dist = {};
   const ratings_elements = {};
 
-  const initialize_ui = () => {
+  const initialize = () => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
     const distribution_element = document.createElement("section");
@@ -78,6 +78,7 @@
       const progress = document.createElement("progress");
       progress.className = "distribution-line csfd-rating-addon";
       progress.setAttribute("max", 0);
+      progress.setAttribute("value", 0);
       line.appendChild(progress);
       
       distribution_element.appendChild(line);
@@ -88,9 +89,9 @@
   }
 
   // Main loop, read `i` more pages to load the distribution, starting with the initial page
-  initialize_ui();
+  initialize();
 
-  const read_cache = (key, destination) => {
+  const read_cache = (key, destination, age) => {
     const json = key ? localStorage[key] : null;
     if (!json) {
       return false;
@@ -98,9 +99,8 @@
     try {
       const data = JSON.parse(json);
       const { timestamp, ratings } = data;
-      // Expiration set to 7 days
       const expiration = parseInt(timestamp) + 1000 * 60 * CACHE_TIME_TO_LIVE_SECONDS;
-      if (expiration < Date.now()) {
+      if (Date.now() - expiration > 0) {
         return false;
       }
       // Don't assign directly for security reasons
@@ -124,11 +124,35 @@
     localStorage[key] = json;
   }
 
+  const maybe_reload = async () => {
+    const before = document.querySelector("div.user-list.rating-users");
+    const parent = before.parentNode;
+    const distribution_element = parent.querySelector("section.csfd-ratings-addon");
+    const reload = document.createElement("div");
+    reload.className = "csfd-ratings-addon reload"
+    reload.innerHTML = `&#x27f3;`;
+    distribution_element.appendChild(reload);
+
+    return new Promise(resolve => {
+      reload.addEventListener('click', () => {
+        reload.remove();
+        resolve();
+      });
+    });
+  };
+
+  // entry point
+
   const baseline_url = window.location.href.match(/^https:\/\/www.csfd.cz\/film\/([^\/]+)\//);
-  const cache_key = baseline_url ? `csfd-dist-rating-cache-${baseline_url[1]}` : null;
+  const cache_key_base_hash = baseline_url ? await digestMessage(baseline_url[1]) : null
+  const cache_key = cache_key_base_hash ? `csfd-dist-rating-cache-${cache_key_base_hash}` : null;
   if (read_cache(cache_key, ratings_dist)) {
     update_ui(ratings_dist, ratings_elements);
-    return;
+    
+    await maybe_reload();
+    for (let sel of ratings_selectors) {
+      ratings_dist[sel] = 0;
+    }
   }  
 
   let source = document.querySelector("section.others-rating");
@@ -144,6 +168,7 @@
 
     const html = await fetch_next_page_html(source);
     if (!html) {
+      update_ui(ratings_dist, ratings_elements, 0);
       break;
     }
     source = get_other_rating_element_from_html(html);

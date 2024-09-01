@@ -10,3 +10,9 @@ span.csfd-rating-addon.star-rating {
 progress.csfd-rating-addon {
   width: 120px;
 }
+.csfd-ratings-addon.reload {
+  width: 100%;
+  cursor: pointer;
+  text-align: center;
+  font-size: 10px;
+}
