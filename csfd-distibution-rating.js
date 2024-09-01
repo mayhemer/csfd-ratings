@@ -102,4 +102,8 @@
     }
     source = get_other_ratinng_element_from_html(html);
   }
+
+  // TODO
+  // - medium: cache the rating (URL base (/film/*/)*$ -> the distribution object + expiration) 
+  // - low: read from the first page (in case someone navigates the ratings `?pageRating=2`)
 })();
