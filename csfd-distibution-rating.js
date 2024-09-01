@@ -18,7 +18,7 @@
     const html = await response.text();
     return html;
   };
-  const get_other_ratinng_element_from_html = (html) => {
+  const get_other_rating_element_from_html = (html) => {
     const pattern = /(<section class="others\-rating"\>.*?<\/section>)/sg;
     const section = html.match(pattern);
     if (!section) {
@@ -104,7 +104,7 @@
     if (!html) {
       break;
     }
-    source = get_other_ratinng_element_from_html(html);
+    source = get_other_rating_element_from_html(html);
   }
 
   // TODO
