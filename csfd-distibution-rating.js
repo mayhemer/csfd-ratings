@@ -1,5 +1,6 @@
 (async function() {
   const MAX_RATING_PAGES_TO_FETCH = 30;
+  const CACHE_TIME_TO_LIVE_SECONDS = 60 * 24 * 7;
 
   const get_next_page_url = (source) => {
     const page_next = source.querySelector(".page-next:not(.disabled)");
@@ -36,7 +37,7 @@
       dist[sel] += elements?.length || 0;
     }
   };
-  const update_ui = (dist, target, iteration) => {
+  const update_ui = (dist, target, iteration = 0) => {
     let total = 0;
     for (let sel in dist) {
       total = Math.max(total, dist[sel]);
@@ -89,6 +90,47 @@
   // Main loop, read `i` more pages to load the distribution, starting with the initial page
   initialize_ui();
 
+  const read_cache = (key, destination) => {
+    const json = key ? localStorage[key] : null;
+    if (!json) {
+      return false;
+    }
+    try {
+      const data = JSON.parse(json);
+      const { timestamp, ratings } = data;
+      // Expiration set to 7 days
+      const expiration = parseInt(timestamp) + 1000 * 60 * CACHE_TIME_TO_LIVE_SECONDS;
+      if (expiration < Date.now()) {
+        return false;
+      }
+      // Don't assign directly for security reasons
+      // This is sanitization of user input
+      for (let sel in destination) {
+        destination[sel] = parseInt(ratings[sel]);
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
+  const write_cache = (key, ratings) => {
+    if (!key) return;
+    const data = {
+      ratings,
+      timestamp: Date.now()
+    }
+    const json = JSON.stringify(data);
+    localStorage[key] = json;
+  }
+
+  const baseline_url = window.location.href.match(/^https:\/\/www.csfd.cz\/film\/([^\/]+)\//);
+  const cache_key = baseline_url ? `csfd-dist-rating-cache-${baseline_url[1]}` : null;
+  if (read_cache(cache_key, ratings_dist)) {
+    update_ui(ratings_dist, ratings_elements);
+    return;
+  }  
+
   let source = document.querySelector("section.others-rating");
   let i = MAX_RATING_PAGES_TO_FETCH;
   while (source) {
@@ -107,7 +149,5 @@
     source = get_other_rating_element_from_html(html);
   }
 
-  // TODO
-  // - medium: cache the rating (URL base (/film/*/)*$ -> the distribution object + expiration) 
-  // - low: read from the first page (in case someone navigates the ratings `?pageRating=2`)
+  write_cache(cache_key, ratings_dist);
 })();
