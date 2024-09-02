@@ -1,3 +1,5 @@
+/* Credits: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest */
+
 async function digestMessage(message) {
   const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
   const hashBuffer = await window.crypto.subtle.digest("SHA-1", msgUint8); // hash the message
