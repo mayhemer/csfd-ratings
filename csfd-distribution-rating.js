@@ -107,43 +107,6 @@
     }
   }
 
-  // Globals
-  const ratings_dist = {};
-  const ratings_elements = {};
-
-  const initialize = () => {
-    const before = document.querySelector("div.user-list.rating-users");
-    const parent = before.parentNode;
-    const distribution_element = document.createElement("section");
-    distribution_element.className = "csfd-ratings-addon";
-
-    for (let sel of ratings_selectors) {
-      ratings_dist[sel] = 0;
-
-      const line = document.createElement("div");
-      line.className = "distribution-line csfd-rating-addon";
-
-      const star_rating = document.createElement("span");
-      star_rating.className = "star-rating csfd-rating-addon";
-      line.appendChild(star_rating);
-
-      const star_rating_value = document.createElement("span");
-      star_rating_value.className = sel.replace(/\./g, " ") + " csfd-rating-addon";
-      star_rating.appendChild(star_rating_value);
-
-      const progress = document.createElement("progress");
-      progress.className = "distribution-line csfd-rating-addon";
-      progress.setAttribute("max", 0);
-      progress.setAttribute("value", 0);
-      line.appendChild(progress);
-
-      distribution_element.appendChild(line);
-      ratings_elements[sel] = progress;
-    }
-
-    parent.insertBefore(distribution_element, before);
-  }
-
   const read_cache = (key, destination) => {
     const json = key ? localStorage[key] : null;
     if (!json) {
@@ -214,7 +177,44 @@
     });
   };
 
-  // Main loop, read `i` more pages to load the distribution, starting with the initial page
+  // Globals
+  const ratings_dist = {};
+  const ratings_elements = {};
+
+  const initialize = () => {
+    const before = document.querySelector("div.user-list.rating-users");
+    const parent = before.parentNode;
+    const distribution_element = document.createElement("section");
+    distribution_element.className = "csfd-ratings-addon";
+
+    for (let sel of ratings_selectors) {
+      ratings_dist[sel] = 0;
+
+      const line = document.createElement("div");
+      line.className = "distribution-line csfd-rating-addon";
+
+      const star_rating = document.createElement("span");
+      star_rating.className = "star-rating csfd-rating-addon";
+      line.appendChild(star_rating);
+
+      const star_rating_value = document.createElement("span");
+      star_rating_value.className = sel.replace(/\./g, " ") + " csfd-rating-addon";
+      star_rating.appendChild(star_rating_value);
+
+      const progress = document.createElement("progress");
+      progress.className = "distribution-line csfd-rating-addon";
+      progress.setAttribute("max", 0);
+      progress.setAttribute("value", 0);
+      line.appendChild(progress);
+
+      distribution_element.appendChild(line);
+      ratings_elements[sel] = progress;
+    }
+
+    parent.insertBefore(distribution_element, before);
+  }
+
+  // Entry point
   initialize();
   setTimeout(prune_cache, 1500);
 
