@@ -253,24 +253,24 @@
       ratings_dist[i] = 0;
     }
     for (let sel of RATINGS_SELECTORS.reverse()) {
-      const line = document.createElement("div");
-      line.className = "distribution-line csfd-rating-addon";
+      const container = document.createElement("div");
+      container.className = "distribution-container csfd-rating-addon";
 
       const star_rating = document.createElement("span");
       star_rating.className = "star-rating csfd-rating-addon";
-      line.appendChild(star_rating);
+      container.appendChild(star_rating);
 
       const star_rating_value = document.createElement("span");
-      star_rating_value.className = sel.replace(/\./g, " ") + " csfd-rating-addon";
+      star_rating_value.className = sel.replace(/\./g, " ").trim() + " csfd-rating-addon";
       star_rating.appendChild(star_rating_value);
 
       const progress = document.createElement("progress");
-      progress.className = "distribution-line csfd-rating-addon";
+      progress.className = "csfd-rating-addon";
       progress.setAttribute("max", 0);
       progress.setAttribute("value", 0);
-      line.appendChild(progress);
+      container.appendChild(progress);
 
-      distribution_element.appendChild(line);
+      distribution_element.appendChild(container);
       ratings_elements[sel] = progress;
     }
 

@@ -1,7 +1,7 @@
 section.csfd-ratings-addon {
   padding: 0.5em 0;
 }
-div.csfd-rating-addon.distribution-line {
+div.csfd-rating-addon.distribution-container {
   display: flex;
 }
 span.csfd-rating-addon.star-rating {
@@ -12,14 +12,14 @@ progress.csfd-rating-addon {
   height: 5px;
   margin: 8px 0;
 }
-progress[value]::-moz-progress-bar,
+progress[value].csfd-rating-addon::-moz-progress-bar,
 .page-red progress[value]::-moz-progress-bar {
   background-color: red;
 }
-.page-blue progress[value]::-moz-progress-bar {
+.page-blue progress[value].csfd-rating-addon::-moz-progress-bar {
   background-color: #658db4;
 }
-.page-grey progress[value]::-moz-progress-bar {
+.page-grey progress[value].csfd-rating-addon::-moz-progress-bar {
   background-color: #535353;
 }
 .csfd-ratings-addon.reload {
