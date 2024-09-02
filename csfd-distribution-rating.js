@@ -44,7 +44,7 @@
  * 
  * Content of a cache entry:
  * {
- *   "ratings":{".stars.stars-5":82,".stars.stars-4":...},
+ *   "rating":[39,72,93,98,67,31],
  *   "timestamp":1725267704239
  * }
  * - ratings is the Ratings distribution array
