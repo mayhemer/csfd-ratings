@@ -103,14 +103,14 @@
   /**
    * Expected selectors for each level of rating
    */
-  const ratings_selectors = [".stars.stars-5", ".stars.stars-4", ".stars.stars-3", ".stars.stars-2", ".stars.stars-1", ".stars.trash"];
+  const RATINGS_SELECTORS = [".stars.stars-5", ".stars.stars-4", ".stars.stars-3", ".stars.stars-2", ".stars.stars-1", ".stars.trash"];
   /**
-   * Updated the cumulated ratings with newly provided DOM data.
+   * Updates the cumulated ratings with newly provided DOM data.
    * @param {element} source - the DOM element we query elements (data) for
    * @param {object} dist - the reference to the global distribution array
    */
   const sink = (source, dist) => {
-    for (let sel of ratings_selectors) {
+    for (let sel of RATINGS_SELECTORS) {
       const elements = source.querySelectorAll(`section.others-rating ${sel}`);
       dist[sel] += elements?.length || 0;
     }
@@ -226,9 +226,9 @@
   };
 
   // Globals
-  // Cumulated distribution ratings ([0..5] -> integer, keys are class-names)
+  // Cumulated distribution ratings ([0..5] -> integer, keys are RATINGS_SELECTORS)
   const ratings_dist = {};
-  // UI elemets, <progress>, to show the results visually
+  // UI elemets, <progress>, to show the results visually, keys same as for distribution
   const ratings_elements = {};
 
   // Creates the UI, prepares the distribution array elements
@@ -241,7 +241,7 @@
     const distribution_element = document.createElement("section");
     distribution_element.className = "csfd-ratings-addon";
 
-    for (let sel of ratings_selectors) {
+    for (let sel of RATINGS_SELECTORS) {
       ratings_dist[sel] = 0;
 
       const line = document.createElement("div");
