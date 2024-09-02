@@ -6,7 +6,7 @@
  *
  * The data sources.
  * csfd.cz has no API, so the extension parses/queries the HTML of the top 
- * level /film/* pages.  We look for the following elements:
+ * level `/film/.../` pages.  We look for the following elements:
  * - <section class="others-rating"> element containing children
  *   <section class="stars stars-N"> where [N] is representing
  *   the rating level (star count).  The extension selects the number
@@ -20,26 +20,27 @@
  * Initially, we look in the `document`.  Next page is fetch()'ed as text
  * (HTML), the "other-ratings" <section> is extracted out, a temporary element 
  * is created and set `innerHTML` with the extracted HTML content.
- * This is potentially dangerous in case the next-page URL is altered. Tho,
- * this temporary element is never inserted to the page's document, we
- * only use `querySelector*` methods on it to search for data the same way
- * as we initially look for it in the `document`.  Any scripts injections 
- * should then not execute.
+ * This is potentially dangerous in case the next-page URL happens to be 
+ * maliciouly altered. Although, this temporary element is never inserted 
+ * to the page's document, we only use `querySelector*` methods on it to search
+ * for data the same way as we initially look for it in the `document`.  
+ * Any malicious script injections should then not execute.
  *
  * The progress is updated at runtime with every sucessfull fetch().  The 
  * maximum number of pages we load to collect ratings is 40 (hard coded).
  * 
  * To prevent excessive requests, the extension uses localStorage to cache
- * each `/film/.../` ratings page with expiration time of one week.
+ * each `/film/.../` page ratings with expiration time of one week.
+ * There is one items in localStorage per page visited.
  * The cache is checked before we start the load.  User is offered an action
  * to reload the data with a refresh button the extension adds to the page
  * when the distribution graph is populated from the cache.
  * The cache is pruned (semi-background and in a delayed fashion) of expired
  * entries on every visit of a `/film/.../` page.
  * 
- * The cache key in `localStorage` is: 
+ * The cache key for `localStorage` items is built as: 
  * `csfd-dist-rating-cache-${SHA1(film-permalink)}`, using SHA1 just to
- * prevent first-sight listing of visited films by human hackers.
+ * prevent first-sight listing of previously visited films by human hackers.
  * 
  * Content of a cache entry:
  * {
@@ -225,7 +226,7 @@
   };
 
   // Globals
-  // Cumulated distribution ratings ([0..6] -> integer, keys are class-names)
+  // Cumulated distribution ratings ([0..5] -> integer, keys are class-names)
   const ratings_dist = {};
   // UI elemets, <progress>, to show the results visually
   const ratings_elements = {};
