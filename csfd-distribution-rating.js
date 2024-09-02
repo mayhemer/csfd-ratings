@@ -204,8 +204,9 @@
   /**
    * An async method, that adds a reload button to the page.  Resolves when this 
    * button is clicked.
+   * @param {object} ratings - the distribution array to be nullified on reload
    */
-  const maybe_reload = async () => {
+  const maybe_reload = async (ratings) => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
     const distribution_element = parent.querySelector("section.csfd-ratings-addon");
@@ -217,13 +218,14 @@
     return new Promise(resolve => {
       reload.addEventListener('click', () => {
         reload.remove();
+        Object.keys(ratings).forEach(k => ratings[k] = 0);
         resolve();
       });
     });
   };
 
   // Globals
-  // Cumulated distribution ratings ([0..6] -> integer)
+  // Cumulated distribution ratings ([0..6] -> integer, keys are class-names)
   const ratings_dist = {};
   // UI elemets, <progress>, to show the results visually
   const ratings_elements = {};
@@ -274,11 +276,7 @@
   const cache_key = cache_key_base_hash ? `${CACHE_KEY_PREFIX}${cache_key_base_hash}` : null;
   if (read_cache(cache_key, ratings_dist)) {
     update_ui(ratings_dist, ratings_elements);
-
-    await maybe_reload();
-    for (let sel of ratings_selectors) {
-      ratings_dist[sel] = 0;
-    }
+    await maybe_reload(ratings_dist);
   }
 
   let source = document.querySelector("section.others-rating");
