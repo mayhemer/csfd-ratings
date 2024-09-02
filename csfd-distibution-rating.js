@@ -1,6 +1,7 @@
 (async function() {
   const MAX_RATING_PAGES_TO_FETCH = 40;
-  const CACHE_TIME_TO_LIVE_SECONDS = 60 * 24 * 7;
+  const CACHE_KEY_PREFIX = "csfd-dist-rating-cache-";
+  const CACHE_TIME_TO_LIVE_MINUTES = 60 * 24 * 7; // keep each film cache for a week
 
   const get_next_page_url = (source) => {
     const page_next = source.querySelector(".page-next:not(.disabled)");
@@ -88,7 +89,7 @@
     parent.insertBefore(distribution_element, before);
   }
 
-  const read_cache = (key, destination, age) => {
+  const read_cache = (key, destination) => {
     const json = key ? localStorage[key] : null;
     if (!json) {
       return false;
@@ -96,7 +97,7 @@
     try {
       const data = JSON.parse(json);
       const { timestamp, ratings } = data;
-      const expiration = parseInt(timestamp) + 1000 * 60 * CACHE_TIME_TO_LIVE_SECONDS;
+      const expiration = parseInt(timestamp) + 1000 * 60 * CACHE_TIME_TO_LIVE_MINUTES;
       if (Date.now() - expiration > 0) {
         return false;
       }
@@ -120,6 +121,26 @@
     const json = JSON.stringify(data);
     localStorage[key] = json;
   }
+  const prune_cache = () => {
+    const keys = [];
+    const key_prefix = new RegExp(`^${CACHE_KEY_PREFIX}`);
+    for (let i = 0; i < localStorage.length; ++i) {
+      const key = localStorage.key(i);
+      if (key.match(key_prefix)) {
+        keys.push(key);
+      } 
+    }
+    const process = (i) => {
+      if (!i) { return; }
+      --i;
+      const key = keys[i];
+      if (!read_cache(key, {})) {
+        localStorage.removeItem(key);
+      }
+      setTimeout(() => process(i));
+    };
+    process(keys.length);
+  }
 
   const maybe_reload = async () => {
     const before = document.querySelector("div.user-list.rating-users");
@@ -140,10 +161,11 @@
 
   // Main loop, read `i` more pages to load the distribution, starting with the initial page
   initialize();
+  setTimeout(prune_cache, 1500);
 
   const baseline_url = window.location.href.match(/^https:\/\/www.csfd.cz\/film\/([^\/]+)\//);
   const cache_key_base_hash = baseline_url ? await digestMessage(baseline_url[1]) : null
-  const cache_key = cache_key_base_hash ? `csfd-dist-rating-cache-${cache_key_base_hash}` : null;
+  const cache_key = cache_key_base_hash ? `${CACHE_KEY_PREFIX}${cache_key_base_hash}` : null;
   if (read_cache(cache_key, ratings_dist)) {
     update_ui(ratings_dist, ratings_elements);
     
