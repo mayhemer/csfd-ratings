@@ -1,6 +1,6 @@
 /**
  * Purpose of the extension: Display distribution of film ratings on
- * www.csfd.cz/file/ pages related to the film title.  Show number of 5-star,
+ * www.csfd.cz/film/ pages related to the film title.  Show number of 5-star,
  * 4-star, etc... ratings as graphical/progress bars inside the page,
  * above the individual ratings section.
  *
