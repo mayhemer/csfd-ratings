@@ -103,35 +103,43 @@
   /**
    * Expected selectors for each level of rating
    */
-  const RATINGS_SELECTORS = [".stars.stars-5", ".stars.stars-4", ".stars.stars-3", ".stars.stars-2", ".stars.stars-1", ".stars.trash"];
+  const RATINGS_SELECTORS = [
+    ".stars.trash",
+    ".stars.stars-1", 
+    ".stars.stars-2", 
+    ".stars.stars-3", 
+    ".stars.stars-4", 
+    ".stars.stars-5" 
+  ];
   /**
    * Updates the cumulated ratings with newly provided DOM data.
    * @param {element} source - the DOM element we query elements (data) for
-   * @param {object} dist - the reference to the global distribution array
+   * @param {object} rating - the reference to the global distribution array
    */
-  const sink = (source, dist) => {
-    for (let sel of RATINGS_SELECTORS) {
+  const sink = (source, rating) => {
+    for (let i in RATINGS_SELECTORS) {
+      const sel = RATINGS_SELECTORS[i];
       const elements = source.querySelectorAll(`section.others-rating ${sel}`);
-      dist[sel] += elements?.length || 0;
+      rating[i] += elements?.length || 0;
     }
   };
   /**
    * Updates the progress bars after the data has been changed.
-   * @param {object} dist - the reference to the global distribution array, immutable
-   * @param {array} target - the target UI DOM elements array, the progress bars
+   * @param {object} rating - the reference to the global distribution array, immutable
+   * @param {array} targets - the target UI DOM elements array, the progress bars
    * @param {int} iteration - the number of itteration, for global progress
    */
-  const update_ui = (dist, target, iteration = 0) => {
+  const update_ui = (rating, targets, iteration = 0) => {
     let total = 0;
-    for (let sel in dist) {
-      total = Math.max(total, dist[sel]);
+    for (let i in rating) {
+      total = Math.max(total, rating[i]);
     }
-    for (let sel in dist) {
-      const rating = dist[sel];
-      const progress = target[sel];
+    for (let i in rating) {
+      const count = rating[i];
+      const progress = targets[RATINGS_SELECTORS[i]];
       progress.setAttribute("max", Math.round(total + iteration));
-      progress.setAttribute("value", rating);
-      progress.setAttribute("title", rating + "x");
+      progress.setAttribute("value", count);
+      progress.setAttribute("title", count + "x");
     }
   }
 
@@ -148,15 +156,15 @@
     }
     try {
       const data = JSON.parse(json);
-      const { timestamp, ratings } = data;
+      const { timestamp, rating } = data;
       const expiration = parseInt(timestamp) + 1000 * 60 * CACHE_TIME_TO_LIVE_MINUTES;
-      if (Date.now() - expiration > 0) {
+      if (Date.now() > expiration || !rating) {
         return false;
       }
       // Don't assign directly for security reasons
       // This is sanitization of user input
-      for (let sel in destination) {
-        destination[sel] = parseInt(ratings[sel]);
+      for (let i in destination) {
+        destination[i] = parseInt(rating[i]);
       }
       return true;
     } catch (e) {
@@ -167,12 +175,12 @@
   /**
    * Stores to localStorage the collected ratings data, adds timestamp=now for expiration calculations
    * @param {string} key - the final cache key to write to
-   * @param {object} ratings - the distribution array
+   * @param {object} rating - the distribution array
    */
-  const write_cache = (key, ratings) => {
+  const write_cache = (key, rating) => {
     if (!key) return;
     const data = {
-      ratings,
+      rating,
       timestamp: Date.now()
     }
     const json = JSON.stringify(data);
@@ -205,9 +213,9 @@
   /**
    * An async method, that adds a reload button to the page.  Resolves when this 
    * button is clicked.
-   * @param {object} ratings - the distribution array to be nullified on reload
+   * @param {object} rating - the distribution array to be nullified on reload
    */
-  const maybe_reload = async (ratings) => {
+  const maybe_reload = async (rating) => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
     const distribution_element = parent.querySelector("section.csfd-ratings-addon");
@@ -219,16 +227,16 @@
     return new Promise(resolve => {
       reload.addEventListener('click', () => {
         reload.remove();
-        Object.keys(ratings).forEach(k => ratings[k] = 0);
+        rating.fill(0);
         resolve();
       });
     });
   };
 
   // Globals
-  // Cumulated distribution ratings ([0..5] -> integer, keys are RATINGS_SELECTORS)
-  const ratings_dist = {};
-  // UI elemets, <progress>, to show the results visually, keys same as for distribution
+  // Cumulated distribution ratings ([0..5] -> integer)
+  const ratings_dist = [];
+  // UI elemets, <progress>, to show the results visually, keys are RATINGS_SELECTORS
   const ratings_elements = {};
 
   // Creates the UI, prepares the distribution array elements
@@ -241,9 +249,10 @@
     const distribution_element = document.createElement("section");
     distribution_element.className = "csfd-ratings-addon";
 
-    for (let sel of RATINGS_SELECTORS) {
-      ratings_dist[sel] = 0;
-
+    for (let i in RATINGS_SELECTORS) {
+      ratings_dist[i] = 0;
+    }
+    for (let sel of RATINGS_SELECTORS.reverse()) {
       const line = document.createElement("div");
       line.className = "distribution-line csfd-rating-addon";
 
