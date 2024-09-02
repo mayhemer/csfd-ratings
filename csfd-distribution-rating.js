@@ -184,6 +184,9 @@
   const initialize = () => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
+
+    parent.querySelector("section.csfd-ratings-addon")?.remove();
+
     const distribution_element = document.createElement("section");
     distribution_element.className = "csfd-ratings-addon";
 
