@@ -9,6 +9,18 @@ span.csfd-rating-addon.star-rating {
 }
 progress.csfd-rating-addon {
   width: 120px;
+  height: 5px;
+  margin: 8px 0;
+}
+progress[value]::-moz-progress-bar,
+.page-red progress[value]::-moz-progress-bar {
+  background-color: red;
+}
+.page-blue progress[value]::-moz-progress-bar {
+  background-color: #658db4;
+}
+.page-grey progress[value]::-moz-progress-bar {
+  background-color: #535353;
 }
 .csfd-ratings-addon.reload {
   width: 100%;
