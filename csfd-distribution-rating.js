@@ -58,10 +58,18 @@
   const CACHE_KEY_PREFIX = "csfd-dist-rating-cache-";
   const CACHE_TIME_TO_LIVE_MINUTES = 60 * 24 * 7; // keep each film cache for a week
 
+  /**
+   * @param {element} source - the DOM element to query children (data) for
+   * @returns the string value of the 'href' for next ratings page, null on failure
+   */
   const get_next_page_url = (source) => {
     const page_next = source.querySelector("a.page-next:not(.disabled)");
     return page_next?.getAttribute("href") || null;
   }
+  /**
+   * @param {element} source - the DOM element to query children (data) for
+   * @returns the string value of HTML content of the next-rating page, null on failure
+   */
   const fetch_next_page_html = async (source) => {
     const href = get_next_page_url(source);
     const url = new URL(href, window.origin);
@@ -75,6 +83,11 @@
     const html = await response.text();
     return html;
   };
+  /**
+   * @param {string} html - the fetched next-rating page HTML content
+   * @returns a <body> DOM element set <section class="others-rating">...<\/section> content
+   * from the provided html content
+   */
   const get_other_rating_element_from_html = (html) => {
     const pattern = /(<section class="others\-rating">.*?<\/section>)/sg;
     const section = html.match(pattern);
@@ -86,13 +99,27 @@
     return e;
   };
 
+  /**
+   * Expected selectors for each level of rating
+   */
   const ratings_selectors = [".stars.stars-5", ".stars.stars-4", ".stars.stars-3", ".stars.stars-2", ".stars.stars-1", ".stars.trash"];
+  /**
+   * Updated the cumulated ratings with newly provided DOM data.
+   * @param {element} source - the DOM element we query elements (data) for
+   * @param {object} dist - the reference to the global distribution array
+   */
   const sink = (source, dist) => {
     for (let sel of ratings_selectors) {
       const elements = source.querySelectorAll(`section.others-rating ${sel}`);
       dist[sel] += elements?.length || 0;
     }
   };
+  /**
+   * Updates the progress bars after the data has been changed.
+   * @param {object} dist - the reference to the global distribution array, immutable
+   * @param {array} target - the target UI DOM elements array, the progress bars
+   * @param {int} iteration - the number of itteration, for global progress
+   */
   const update_ui = (dist, target, iteration = 0) => {
     let total = 0;
     for (let sel in dist) {
@@ -107,6 +134,12 @@
     }
   }
 
+  /**
+   * Loads data from localStorage, check for expiration, populates the distribution array with data
+   * @param {string} key - the final cache key to load
+   * @param {object} destination - the reference to the distribution array to fill
+   * @returns true if the cache was loaded succesfully, false otherwise (expired, missing, invalid)
+   */
   const read_cache = (key, destination) => {
     const json = key ? localStorage[key] : null;
     if (!json) {
@@ -130,6 +163,11 @@
       return false;
     }
   }
+  /**
+   * Stores to localStorage the collected ratings data, adds timestamp=now for expiration calculations
+   * @param {string} key - the final cache key to write to
+   * @param {object} ratings - the distribution array
+   */
   const write_cache = (key, ratings) => {
     if (!key) return;
     const data = {
@@ -139,6 +177,9 @@
     const json = JSON.stringify(data);
     localStorage[key] = json;
   }
+  /**
+   * Semi-background loop to check all cached entries for expiration and removing them.
+   */
   const prune_cache = () => {
     const keys = [];
     const key_prefix = new RegExp(`^${CACHE_KEY_PREFIX}`);
@@ -160,6 +201,10 @@
     process(keys.length);
   }
 
+  /**
+   * An async method, that adds a reload button to the page.  Resolves when this 
+   * button is clicked.
+   */
   const maybe_reload = async () => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
@@ -178,9 +223,12 @@
   };
 
   // Globals
+  // Cumulated distribution ratings ([0..6] -> integer)
   const ratings_dist = {};
+  // UI elemets, <progress>, to show the results visually
   const ratings_elements = {};
 
+  // Creates the UI, prepares the distribution array elements
   const initialize = () => {
     const before = document.querySelector("div.user-list.rating-users");
     const parent = before.parentNode;
