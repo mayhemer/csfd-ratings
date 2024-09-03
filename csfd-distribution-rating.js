@@ -1,34 +1,44 @@
 /**
- * Purpose of the extension: Display distribution of film ratings on
- * www.csfd.cz/film/ pages related to the film title.  Show number of 5-star,
- * 4-star, etc... ratings as graphical/progress bars inside the page,
- * above the individual ratings section.
+ * Purpose of the extension
  *
- * The data sources.
- * csfd.cz has no API, so the extension parses/queries the HTML of the top 
+ * Display distribution of film ratings on www.csfd.cz/film/ pages related
+ * to the film title.  Show number of 5-stars, 4-stars, etc... ratings as
+ * graphical/progress bars inside the page, above the individual ratings
+ * section.
+ *
+ * Data sources
+ *
+ * csfd.cz has no API, so the extension parses/queries the HTML of the top
  * level `/film/.../` pages.  We look for the following elements:
+ * 
  * - <section class="others-rating"> element containing children
  *   <section class="stars stars-N"> where [N] is representing
  *   the rating level (star count).  The extension selects the number
- *   of these elements and cumulates the ratings in a global array with
- *   six elements (0..5 stars) => Ratings distribution array
+ *   of these elements and cumulates the ratings in an array.
+ *   => Ratings distribution array, [0..5] of integers
+ * 
  * - <a class="page-next">'s `href` value for the next page with more ratings
- *   until this elements has "disabled" class set; then we stop
- *   => Next rating page URL; this URL is implicitly trusted to be from the 
- *   https://www.csfd.cz origin; any altering XSS is not accounted for.
+ *   until this elements has "disabled" class set; then we stop, it's the last
+ *   page.
+ *   => Next rating page URL; this URL is implicitly trusted to be from the
+ *   https://www.csfd.cz origin
+ *
+ * Mechanism
  *
  * Initially, we look in the `document`.  Next page is fetch()'ed as text
- * (HTML), the "other-ratings" <section> is extracted out, a temporary element 
+ * (HTML), the "other-ratings" <section> is extracted out, a temporary element
  * is created and set `innerHTML` with the extracted HTML content.
- * This is potentially dangerous in case the next-page URL happens to be 
- * maliciouly altered. Although, this temporary element is never inserted 
+ * This is potentially dangerous in case the next-page URL happens to be
+ * maliciouly altered. Although, this temporary element is never inserted
  * to the page's document, we only use `querySelector*` methods on it to search
- * for data the same way as we initially look for it in the `document`.  
+ * for data the same way as we initially look for it in the `document`.
  * Any malicious script injections should then not execute.
  *
- * The progress is updated at runtime with every sucessfull fetch().  The 
+ * The progress is updated at runtime with every sucessfull fetch().  The
  * maximum number of pages we load to collect ratings is 40 (hard coded).
- * 
+ *
+ * Caching
+ *
  * To prevent excessive requests, the extension uses localStorage to cache
  * each `/film/.../` page ratings with expiration time of one week.
  * There is one items in localStorage per page visited.
@@ -37,21 +47,23 @@
  * when the distribution graph is populated from the cache.
  * The cache is pruned (semi-background and in a delayed fashion) of expired
  * entries on every visit of a `/film/.../` page.
- * 
- * The cache key for `localStorage` items is built as: 
- * `csfd-dist-rating-cache-${SHA1(film-permalink)}`, using SHA1 just to
- * prevent first-sight listing of previously visited films by human hackers.
- * 
+ *
+ * The cache key for `localStorage` items is built as:
+ * `csfd-dist-rating-cache-${SHA1(film-permalink)}`, using SHA1 to prevent
+ * leaking the history of visits just by looking at the cached keys.
+ *
  * Content of a cache entry:
  * {
  *   "rating":[39,72,93,98,67,31],
  *   "timestamp":1725267704239
  * }
- * - ratings is the Ratings distribution array
- * - timestamps is time of the cache entry creation, used for expiritaion 
+ * - `rating` is the Ratings distribution array
+ * - `timestamps` is time of the cache entry creation, used for expiritaion
  *   calculation
- * 
- * There is no user tracking, no external collection of the data.
+ *
+ * Privacy
+ *
+ * There is no user tracking, no external collection of any data.
  */
 
 (async function() {
@@ -105,11 +117,11 @@
    */
   const RATINGS_SELECTORS = [
     ".stars.trash",
-    ".stars.stars-1", 
-    ".stars.stars-2", 
-    ".stars.stars-3", 
-    ".stars.stars-4", 
-    ".stars.stars-5" 
+    ".stars.stars-1",
+    ".stars.stars-2",
+    ".stars.stars-3",
+    ".stars.stars-4",
+    ".stars.stars-5"
   ];
   /**
    * Updates the cumulated ratings with newly provided DOM data.
@@ -178,7 +190,7 @@
    * @param {object} rating - the distribution array
    */
   const write_cache = (key, rating) => {
-    if (!key) return;
+    if (!key) { return; }
     const data = {
       rating,
       timestamp: Date.now()
@@ -211,7 +223,7 @@
   }
 
   /**
-   * An async method, that adds a reload button to the page.  Resolves when this 
+   * An async method, that adds a reload button to the page.  Resolves when this
    * button is clicked.
    * @param {object} rating - the distribution array to be nullified on reload
    */
