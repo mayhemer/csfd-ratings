@@ -98,7 +98,7 @@
   };
   /**
    * @param {string} html - the fetched next-rating page HTML content
-   * @returns a <body> DOM element set <section class="others-rating">...<\/section> content
+   * @returns a <body> DOM element set <section class="others-rating">...</section> content
    * from the provided html content
    */
   const get_other_rating_element_from_html = (html) => {
