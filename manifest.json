@@ -2,7 +2,7 @@
   "description": "Adds rating distribution to csfd.cz",
   "manifest_version": 2,
   "name": "CSFD Distribuce Hodnoceni",
-  "version": "1.1",
+  "version": "1.2",
 
   "content_scripts": [
     {
