@@ -14,7 +14,7 @@ progress.csfd-rating-addon {
 }
 progress[value].csfd-rating-addon::-moz-progress-bar,
 .page-red progress[value]::-moz-progress-bar {
-  background-color: red;
+  background-color: var(--color-red);
 }
 .page-blue progress[value].csfd-rating-addon::-moz-progress-bar {
   background-color: #658db4;
