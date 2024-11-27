@@ -301,7 +301,7 @@
   initialize();
   setTimeout(prune_cache, 1500);
 
-  const baseline_url = window.location.href.match(/^https:\/\/www\.csfd\.cz\/film\/([^\/]+)\//);
+  const baseline_url = window.location.href.match(/^https:\/\/www\.csfd\.cz\/film\/([\d\w\-\/]+)\/[\w\-]+\//);
   const cache_key_base_hash = baseline_url ? await digestMessage(baseline_url[1]) : null
   const cache_key = cache_key_base_hash ? `${CACHE_KEY_PREFIX}${cache_key_base_hash}` : null;
   if (read_cache(cache_key, ratings_dist)) {
