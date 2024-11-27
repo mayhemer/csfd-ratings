@@ -10,13 +10,13 @@
  *
  * csfd.cz has no API, so the extension parses/queries the HTML of the top
  * level `/film/.../` pages.  We look for the following elements:
- * 
+ *
  * - <section class="others-rating"> element containing children
  *   <section class="stars stars-N"> where [N] is representing
  *   the rating level (star count).  The extension selects the number
  *   of these elements and cumulates the ratings in an array.
  *   => Ratings distribution array, [0..5] of integers
- * 
+ *
  * - <a class="page-next">'s `href` value for the next page with more ratings
  *   until this elements has "disabled" class set; then we stop, it's the last
  *   page.
@@ -36,6 +36,7 @@
  *
  * The progress is updated at runtime with every sucessfull fetch().  The
  * maximum number of pages we load to collect ratings is 40 (hard coded).
+ * We do at most 6 concurrent parallel requests.
  *
  * Caching
  *
@@ -68,6 +69,7 @@
 
 (async function() {
   const MAX_RATING_PAGES_TO_FETCH = 40;
+  const PARALLEL_REQUESTS = 6;
   const CACHE_KEY_PREFIX = "csfd-dist-rating-cache-";
   const CACHE_TIME_TO_LIVE_MINUTES = 60 * 24 * 7; // keep each film cache for a week
 
@@ -80,11 +82,17 @@
     return page_next?.getAttribute("href") || null;
   }
   /**
+   * @param {href} the next rating page URL we want to change
+   * @returns the rating page of the required number URL
+   */
+  const change_next_page_url = (href, page) => {
+    return href.replace(/(\W)pageRating=\d+/, `$1pageRating=${page}`)
+  }
+  /**
    * @param {element} source - the DOM element to query children (data) for
    * @returns the string value of HTML content of the next-rating page, null on failure
    */
-  const fetch_next_page_html = async (source) => {
-    const href = get_next_page_url(source);
+  const fetch_next_page_html = async (href) => {
     const url = new URL(href, window.origin);
     if (!url) {
       return null;
@@ -94,7 +102,7 @@
       return null;
     }
     const html = await response.text();
-    return html;
+    return { html, href };
   };
   /**
    * @param {string} html - the fetched next-rating page HTML content
@@ -303,21 +311,59 @@
 
   let source = document.querySelector("section.others-rating");
   let i = MAX_RATING_PAGES_TO_FETCH;
-  while (source) {
-    --i;
+
+  if (PARALLEL_REQUESTS > 0) {
     sink(source, ratings_dist);
     update_ui(ratings_dist, ratings_elements, i);
 
-    if (i == 0) {
-      break;
+    const next_page_url_template = get_next_page_url(source);
+    let requests = [];
+    let sent = 1;
+
+    while (i && next_page_url_template) {
+      while (sent < MAX_RATING_PAGES_TO_FETCH && requests.length < PARALLEL_REQUESTS) {
+        ++sent;
+        const href = change_next_page_url(next_page_url_template, sent);
+        requests.push({ href, request: fetch_next_page_html(href) });
+      }
+
+      const request = Promise.race(requests.map(req => req.request));
+      if (!request) {
+        break;
+      }
+
+      const { html, href } = await request;
+      requests = requests.filter(req => req.href != href);
+      source = get_other_rating_element_from_html(html);
+      
+      --i;
+      sink(source, ratings_dist);
+      update_ui(ratings_dist, ratings_elements, i);
+      
+      if (!get_next_page_url(source)) {
+        sent = MAX_RATING_PAGES_TO_FETCH;
+      }
     }
 
-    const html = await fetch_next_page_html(source);
-    if (!html) {
-      update_ui(ratings_dist, ratings_elements, 0);
-      break;
+    update_ui(ratings_dist, ratings_elements);
+  } else {
+    while (source) {
+      --i;
+      sink(source, ratings_dist);
+      update_ui(ratings_dist, ratings_elements, i);
+
+      if (i == 0) {
+        break;
+      }
+
+      const href = get_next_page_url(source);
+      const html = await fetch_next_page_html(href);
+      if (!html) {
+        update_ui(ratings_dist, ratings_elements);
+        break;
+      }
+      source = get_other_rating_element_from_html(html);
     }
-    source = get_other_rating_element_from_html(html);
   }
 
   write_cache(cache_key, ratings_dist);

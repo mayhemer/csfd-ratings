@@ -19,7 +19,7 @@ The extension doesn't track or send anywhere any private data.  Its sole purpose
 
 ## Summary of the extension code
 
-ČSFD has no API to query the necessary data easily from.  The only way is to select data from the page HTML directly.  What the extension does is a summation of star ratings from the small "Ratings" view on the right side - visible on a wider screen.  To see more of them, you need to click on the right arrow (>) below.  As there are always only 10 ratings on a page, the add-on internally fetches this "next page", extracts the relevant part of the HTML, adds it to the graph, then queries for the next-next page, and so on, up to fourty times.
+ČSFD has no API to query the necessary data easily from.  The only way is to select data from the page HTML directly.  What the extension does is a summation of star ratings from the small "Ratings" view on the right side - visible on a wider screen.  To see more of them, you need to click on the right arrow (>) below.  As there are always only 10 ratings on a page, the add-on internally `fetch`es this "next page", extracts the relevant part of the HTML, adds it to the graph, then queries for the next-next page, and so on, up to fourty times.  Update: now the add-on goes parallel, six concurrent requests at the same time.
 
 The data is queried from the DOM using vanilla JS `querySelector*()` methods.  The elements to look for are well distinguished by class name hierarchy.
 
