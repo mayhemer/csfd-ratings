@@ -327,24 +327,27 @@
         requests.push({ href, request: fetch_next_page_html(href) });
       }
 
-      const request = Promise.race(requests.map(req => req.request));
-      if (!request) {
+      try {
+        const request = Promise.any(requests.map(req => req.request));
+        if (!request) {
+          break;
+        }
+
+        const { html, href } = await request;
+        requests = requests.filter(req => req.href != href);
+        source = get_other_rating_element_from_html(html);
+        
+        --i;
+        sink(source, ratings_dist);
+        update_ui(ratings_dist, ratings_elements, i);
+        
+        if (!get_next_page_url(source)) {
+          sent = MAX_RATING_PAGES_TO_FETCH;
+        }
+      } catch (e) {
         break;
-      }
-
-      const { html, href } = await request;
-      requests = requests.filter(req => req.href != href);
-      source = get_other_rating_element_from_html(html);
-      
-      --i;
-      sink(source, ratings_dist);
-      update_ui(ratings_dist, ratings_elements, i);
-      
-      if (!get_next_page_url(source)) {
-        sent = MAX_RATING_PAGES_TO_FETCH;
-      }
+      }      
     }
-
     update_ui(ratings_dist, ratings_elements);
   } else {
     while (source) {
